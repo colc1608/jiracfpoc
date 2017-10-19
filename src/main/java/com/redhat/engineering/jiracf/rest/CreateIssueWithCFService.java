@@ -21,18 +21,24 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
-@Path("issue")
-@Consumes(MediaType.APPLICATION_JSON)
-@Produces(MediaType.APPLICATION_JSON)
-public class CreateIssueWithCFService {
-    private final Logger LOGGER = LoggerFactory.getLogger(this.getClass());
+@Path( "issue" )
+@Consumes( MediaType.APPLICATION_JSON )
+@Produces( MediaType.APPLICATION_JSON )
+public class CreateIssueWithCFService
+{
+    private final Logger LOGGER = LoggerFactory.getLogger( this.getClass() );
+
     private final UserManager userManager;
+
     private final CrowdService crowdService;
+
     private final ProjectManager projectManager;
+
     private final IssueService issueService;
 
-    public CreateIssueWithCFService(UserManager userManager, CrowdService crowdService, ProjectManager projectManager,
-            IssueService issueService) {
+    public CreateIssueWithCFService( UserManager userManager, CrowdService crowdService, ProjectManager projectManager,
+                                     IssueService issueService )
+    {
         this.userManager = userManager;
         this.crowdService = crowdService;
         this.projectManager = projectManager;
@@ -40,61 +46,86 @@ public class CreateIssueWithCFService {
     }
 
     @GET
-    @Path("/project/{projectKey}")
-    public Response createIssue(@Context UriInfo uriInfo, @PathParam("projectKey") final String projectKey) {
-        Project prj = projectManager.getProjectObjByKey(projectKey);
+    @Path( "/project/{projectKey}" )
+    public Response createIssue( @Context UriInfo uriInfo, @PathParam( "projectKey" ) final String projectKey )
+    {
+        Project prj = projectManager.getProjectObjByKey( projectKey );
         UserProfile currentUser = userManager.getRemoteUser();
-        User user = crowdService.getUser(currentUser.getUsername());
-        ApplicationUser appUser = ApplicationUsers.from(user);
+        User user = crowdService.getUser( currentUser.getUsername() );
+        ApplicationUser appUser = ApplicationUsers.from( user );
 
-        try {
-            MutableIssue issue = createNewIssue(appUser, prj);
-            return Response.ok(issue.getKey()).build();
-        } catch (IllegalStateException e) {
-            LOGGER.error("Issue Creation ERROR", e);
-            return Response.status(Response.Status.BAD_REQUEST).build();
+        try
+        {
+            MutableIssue issue = createNewIssue( appUser, prj );
+            return Response.ok( issue.getKey() ).build();
+        }
+        catch ( IllegalStateException e )
+        {
+            LOGGER.error( "Issue Creation ERROR", e );
+            return Response.status( Response.Status.BAD_REQUEST ).build();
         }
     }
 
     @GET
-    @Path("{issueKey}")
-    public Response getIssue(@Context UriInfo uriInfo, @PathParam("issueKey") final String issueKey) {
+    @Path( "{issueKey}" )
+    public Response getIssue( @Context UriInfo uriInfo, @PathParam( "issueKey" ) final String issueKey )
+    {
         UserProfile currentUser = userManager.getRemoteUser();
-        User user = crowdService.getUser(currentUser.getUsername());
-        ApplicationUser appUser = ApplicationUsers.from(user);
+        User user = crowdService.getUser( currentUser.getUsername() );
+        ApplicationUser appUser = ApplicationUsers.from( user );
 
-        try {
-            MutableIssue issue = getIssue(appUser, issueKey);
-            LOGGER.warn(issue.toString());
-            return Response.ok(issue.getKey()).build();
-        } catch (IllegalStateException e) {
-            LOGGER.error("Issue GET ERROR", e);
-            return Response.status(Response.Status.BAD_REQUEST).build();
+        try
+        {
+            MutableIssue issue = getIssue( appUser, issueKey );
+            LOGGER.info( issue.getIssueTypeId() );
+            LOGGER.info( issue.getStatusId() );
+            LOGGER.info( issue.getPriority().getId() );
+            LOGGER.info( issue.getResolutionId() );
+            return Response.ok( issue.getKey() ).build();
+        }
+        catch ( IllegalStateException e )
+        {
+            LOGGER.error( "Issue GET ERROR", e );
+            return Response.status( Response.Status.BAD_REQUEST ).build();
         }
     }
 
-    private MutableIssue createNewIssue(ApplicationUser user, Project project) {
+    private MutableIssue createNewIssue( ApplicationUser user, Project project )
+    {
         IssueInputParameters issueInputParameters = issueService.newIssueInputParameters();
-        issueInputParameters.setProjectId(project.getId()).setIssueTypeId("1").setSummary("Test project issue")
-                .setReporterId(user.getUsername()).setAssigneeId(user.getUsername()).setDescription("Test project issue")
-                .setStatusId("1").setPriorityId("1").setResolutionId("1");
-        IssueService.CreateValidationResult createValidationResult = issueService.validateCreate(user, issueInputParameters);
-        if (createValidationResult.isValid()) {
-            IssueService.IssueResult issueResult = issueService.create(user, createValidationResult);
-            if (!issueResult.isValid()) {
+        issueInputParameters.setProjectId( project.getId() )
+                            .setIssueTypeId( "10100" )
+                            .setSummary( "Test project issue" )
+                            .setReporterId( user.getUsername() )
+                            .setAssigneeId( user.getUsername() )
+                            .setDescription( "Test project issue" )
+                            .setStatusId( "10100" )
+                            .setPriorityId( "3" );
+        IssueService.CreateValidationResult createValidationResult =
+                issueService.validateCreate( user, issueInputParameters );
+        if ( createValidationResult.isValid() )
+        {
+            IssueService.IssueResult issueResult = issueService.create( user, createValidationResult );
+            if ( !issueResult.isValid() )
+            {
                 ErrorCollection collection = issueResult.getErrorCollection();
-                throw new IllegalStateException("issue created incorrectly: " + collection.toString());
-            } else {
+                throw new IllegalStateException( "issue created incorrectly: " + collection.toString() );
+            }
+            else
+            {
                 return issueResult.getIssue();
             }
-        } else {
+        }
+        else
+        {
             ErrorCollection collection = createValidationResult.getErrorCollection();
-            throw new IllegalStateException("issue created incorrectly: " + collection.toString());
+            throw new IllegalStateException( "issue created incorrectly: " + collection.toString() );
         }
     }
 
-    private MutableIssue getIssue(ApplicationUser user, String issueKey) {
-        final IssueService.IssueResult issueResult = issueService.getIssue(user, issueKey);
+    private MutableIssue getIssue( ApplicationUser user, String issueKey )
+    {
+        final IssueService.IssueResult issueResult = issueService.getIssue( user, issueKey );
         return issueResult.getIssue();
     }
 
