@@ -1,0 +1,60 @@
+<atlassian-plugin key="${project.groupId}.${project.artifactId}"
+	name="JIRA: CF-POC" plugins-version="2">
+	<plugin-info>
+		<description>${project.description}</description>
+		<version>${project.version}</version>
+		<vendor name="${project.organization.name}" url="${project.organization.url}" />
+	</plugin-info>
+
+	<component-import key="pluginScheduler" interface="com.atlassian.sal.api.scheduling.PluginScheduler"/>
+	<component-import key="i18nResolver" interface="com.atlassian.sal.api.message.I18nResolver"/>
+	<component-import key="velocity-renderer" interface="com.atlassian.templaterenderer.TemplateRenderer" />
+	<component-import key="requestFactory" interface="com.atlassian.sal.api.net.RequestFactory"/>
+	<component-import key="applicationProperties" interface="com.atlassian.sal.api.ApplicationProperties"/>
+	<component-import key="fieldScreenManager" interface="com.atlassian.jira.issue.fields.screen.FieldScreenManager"/>
+	<component-import key="userManager" interface="com.atlassian.sal.api.user.UserManager" />
+
+	<resource type="i18n" name="i18n" location="i18n"/>
+
+	<rest key="rest" name="REST API" path="/jiracf" version="1.0">
+		<description>Interface for simple issue creation</description>
+		<package>com.redhat.engineering.jiracf.rest</package>
+	</rest>
+
+	<web-resource key="resources">
+		<description>Resources supporting UI</description>
+		<dependency>com.atlassian.auiplugin:aui-experimental-restfultable</dependency>
+		<dependency>com.atlassian.auiplugin:jquery-ui-other</dependency>
+		<dependency>com.atlassian.auiplugin:aui-select2</dependency>
+		<dependency>com.atlassian.auiplugin:aui-date-picker</dependency>
+		<context>jiracf-resources</context>
+	</web-resource>
+
+
+	<customfield-searcher key="jira-cf-select-searcher" name="Custom Select Searcher"
+						  class="com.atlassian.jira.issue.customfields.searchers.TextSearcher">
+		<description>Search by the cf</description>
+		<resource type="velocity" name="search" location="/templates/plugins/fields/edit-searcher/search-basictext.vm"/>
+		<resource type="velocity" name="view" location="/templates/plugins/fields/view-searcher/view-searcher-basictext.vm"/>
+		<valid-customfield-type package="${project.groupId}.${project.artifactId}" key="jira-cf-select"/>
+	</customfield-searcher>
+
+	<customfield-type key="jira-cf-select" name="Custom Select"
+					class="com.redhat.engineering.jiracf.customfields.JiraSelectCFType">
+		<description>
+			A select CF type
+		</description>
+		<resource type="velocity" name="edit" location="/templates/plugins/fields/edit/edit-select.vm" />
+		<resource type="velocity" name="xml" location="/templates/plugins/fields/xml/xml-select.vm" />
+		<resource type="velocity" name="view" location="/templates/plugins/fields/view/view-select.vm" />
+	</customfield-type>
+
+
+	<component key="cfRegisterJob" class="com.redhat.engineering.jiracf.customfields.CfRegisterJob" public="true">
+		<description>
+			Registers global custom field(s).
+		</description>
+		<interface>com.atlassian.sal.api.lifecycle.LifecycleAware</interface>
+	</component>
+
+</atlassian-plugin>

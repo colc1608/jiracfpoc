@@ -1,0 +1,22 @@
+# eclipse
+.classpath
+.project
+.settings/
+
+# IntelliJ IDEA
+*.iml
+*.swp
+*.ipr
+*.iws
+.idea/
+.idea_modules/
+
+
+# build
+target/
+bin/
+test-output/
+
+# PMD
+.pmd
+.eclipse-pmd
